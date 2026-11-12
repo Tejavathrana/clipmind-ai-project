@@ -1,0 +1,1582 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ClipMind AI - Video Summarization & Insights</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
+      --fg: #0f172a;
+      --fg-muted: #64748b;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --primary-subtle: #eff6ff;
+      --accent: #8b5cf6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --radius: 10px;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0b1120;
+      --card-bg: #131c2e;
+      --card-border: #1e293b;
+      --fg: #f1f5f9;
+      --fg-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #60a5fa;
+      --primary-subtle: #1e293b;
+      --accent: #a855f7;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #f87171;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--fg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    /* Header */
+    header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.85rem 1.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: var(--fg);
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 800;
+      font-size: 1.05rem;
+    }
+
+    .user-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .badge-primary { background: var(--primary-subtle); color: var(--primary); border: 1px solid var(--primary); }
+    .badge-admin { background: #fee2e2; color: #991b1b; border: 1px solid #f87171; }
+    .badge-creator { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+    .badge-educator { background: #e0e7ff; color: #3730a3; border: 1px solid #818cf8; }
+    .badge-learner { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .badge-ready { background: #dcfce7; color: #166534; }
+    .badge-processing { background: #fef3c7; color: #92400e; animation: pulse 1.8s infinite; }
+    .badge-failed { background: #fee2e2; color: #991b1b; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.55; }
+    }
+
+    /* Navigation Bar */
+    nav.tabs {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.75rem 1.75rem 0;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--card-border);
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      padding: 0.6rem 1.1rem;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--fg-muted);
+      font-weight: 600;
+      font-size: 0.92rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      transition: all 0.15s;
+    }
+
+    .tab-btn:hover { color: var(--primary); }
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      max-width: 1240px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.75rem;
+    }
+
+    /* Common Card */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 1.5rem;
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+      color: var(--fg);
+    }
+
+    .card-subtitle {
+      font-size: 0.88rem;
+      color: var(--fg-muted);
+      margin-bottom: 1.25rem;
+    }
+
+    /* Forms & Inputs */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      font-size: 0.84rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+      color: var(--fg);
+    }
+    input[type="text"], input[type="email"], input[type="password"], select, textarea {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      font-family: inherit;
+      font-size: 0.92rem;
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--fg);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      padding: 0.6rem 1.15rem;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary { background: var(--bg); border-color: var(--card-border); color: var(--fg); }
+    .btn-secondary:hover { background: var(--card-border); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { opacity: 0.9; }
+    .btn-sm { padding: 0.35rem 0.7rem; font-size: 0.78rem; }
+    .btn-icon { padding: 0.5rem; border-radius: 6px; }
+
+    /* Video Library Grid */
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .video-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+      cursor: pointer;
+    }
+    .video-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--primary);
+    }
+
+    .video-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.65rem;
+    }
+    .video-title {
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--fg);
+      word-break: break-word;
+    }
+    .video-summary {
+      font-size: 0.86rem;
+      color: var(--fg-muted);
+      line-height: 1.45;
+      margin-bottom: 1rem;
+      flex: 1;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .video-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.8rem;
+      color: var(--fg-muted);
+      border-top: 1px solid var(--card-border);
+      padding-top: 0.75rem;
+      margin-top: auto;
+    }
+
+    /* Video Insights & Player View */
+    .player-view {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 950px) {
+      .player-view { grid-template-columns: 1fr; }
+    }
+
+    .video-container {
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+    video {
+      width: 100%;
+      max-height: 440px;
+      display: block;
+      outline: none;
+    }
+
+    .player-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      background: var(--bg);
+      padding: 0.6rem 0.9rem;
+      border-radius: 6px;
+      border: 1px solid var(--card-border);
+      margin-bottom: 1.2rem;
+      flex-wrap: wrap;
+    }
+
+    /* Key Moments */
+    .moment-card {
+      background: var(--bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 0.75rem 0.9rem;
+      margin-bottom: 0.55rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .moment-card:hover {
+      background: var(--primary-subtle);
+      border-color: var(--primary);
+    }
+    .moment-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.2rem 0.55rem;
+      background: var(--primary);
+      color: white;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .moment-text {
+      font-size: 0.86rem;
+      color: var(--fg);
+      flex: 1;
+    }
+    .moment-score {
+      font-size: 0.75rem;
+      color: var(--fg-muted);
+      font-weight: 600;
+    }
+
+    /* Keywords */
+    .kw-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+    .kw-chip {
+      background: var(--bg);
+      border: 1px solid var(--card-border);
+      padding: 0.2rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      color: var(--fg);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .kw-chip:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-subtle);
+    }
+
+    /* Interactive Transcript */
+    .transcript-box {
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      background: var(--bg);
+      max-height: 520px;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+    .transcript-segment {
+      padding: 0.55rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      cursor: pointer;
+      display: flex;
+      gap: 0.75rem;
+      transition: background 0.1s;
+    }
+    .transcript-segment:hover {
+      background: rgba(59, 130, 246, 0.08);
+    }
+    .transcript-segment.active {
+      background: rgba(59, 130, 246, 0.18);
+      border-left: 3px solid var(--primary);
+      font-weight: 600;
+    }
+    .seg-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--primary);
+      white-space: nowrap;
+      user-select: none;
+    }
+    .seg-text {
+      color: var(--fg);
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th, td {
+      padding: 0.75rem 0.9rem;
+      text-align: left;
+      border-bottom: 1px solid var(--card-border);
+    }
+    th {
+      background: var(--bg);
+      color: var(--fg-muted);
+      font-weight: 600;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    tr:hover td {
+      background: rgba(59, 130, 246, 0.02);
+    }
+
+    /* Toast Notification */
+    #toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--fg);
+      color: var(--bg);
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      box-shadow: var(--shadow-lg);
+      font-size: 0.88rem;
+      font-weight: 500;
+      z-index: 999;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: transform 0.25s, opacity 0.25s;
+      pointer-events: none;
+    }
+    #toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 1.5rem;
+    }
+    .modal {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 600px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* Utility */
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .gap-sm { gap: 0.5rem; }
+    .gap-md { gap: 1rem; }
+    .mt-1 { margin-top: 0.5rem; }
+    .mt-2 { margin-top: 1rem; }
+    .mb-2 { margin-bottom: 1rem; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand" onclick="switchTab('library')">
+      <div class="brand-logo">C</div>
+      <span>ClipMind AI</span>
+    </div>
+    <div class="user-actions">
+      <button class="btn btn-secondary btn-sm" id="theme-btn" title="Toggle Dark/Light Mode">🌙</button>
+      <div id="user-info" class="flex-between gap-sm hidden">
+        <span id="user-email" style="font-size:0.86rem;font-weight:600;"></span>
+        <span id="user-role-badge" class="badge"></span>
+        <button class="btn btn-secondary btn-sm" id="logout-btn">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Bar -->
+  <nav class="tabs hidden" id="main-nav">
+    <button class="tab-btn active" data-tab="library">🎬 Video Library</button>
+    <button class="tab-btn" data-tab="upload" id="nav-upload">⬆️ Upload</button>
+    <button class="tab-btn" data-tab="bookmarks">🔖 Bookmarks</button>
+    <button class="tab-btn" data-tab="analytics" id="nav-analytics">📊 Analytics</button>
+    <button class="tab-btn" data-tab="admin" id="nav-admin" style="display:none;">⚙️ Admin Console</button>
+  </nav>
+
+  <!-- Main Content Areas -->
+  <main>
+    <!-- Authentication Card -->
+    <div id="view-auth" class="card" style="max-width: 440px; margin: 3rem auto;">
+      <h2 class="card-title" id="auth-title">Welcome to ClipMind AI</h2>
+      <p class="card-subtitle">AI-Powered Video Summarization, Transcripts & Key Moments</p>
+
+      <div style="display:flex; border-bottom:1px solid var(--card-border); margin-bottom:1.25rem;">
+        <button class="tab-btn active" id="tab-signin" style="flex:1; justify-content:center;">Sign In</button>
+        <button class="tab-btn" id="tab-register" style="flex:1; justify-content:center;">Register</button>
+      </div>
+
+      <form id="auth-form" onsubmit="return false;">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="auth-email" placeholder="you@example.com" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="auth-password" placeholder="••••••••" required>
+        </div>
+        <div class="form-group hidden" id="group-role">
+          <label>Account Role</label>
+          <select id="auth-role">
+            <option value="creator">Creator (Upload & Manage Videos)</option>
+            <option value="educator">Educator (Courses & Video Lectures)</option>
+            <option value="learner">Learner (Viewer & Notes)</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="auth-submit" style="width:100%; margin-top:0.5rem;">Sign In</button>
+        <p id="auth-error" style="color:var(--danger); font-size:0.84rem; margin-top:0.75rem; text-align:center;"></p>
+      </form>
+    </div>
+
+    <!-- Video Library View -->
+    <div id="view-library" class="hidden">
+      <div class="flex-between mb-2" style="flex-wrap:wrap; gap:1rem;">
+        <div>
+          <h2 class="card-title">Video Library</h2>
+          <p class="card-subtitle" style="margin-bottom:0;">Browse all processed lectures, webinars, and recorded sessions.</p>
+        </div>
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+          <input type="text" id="lib-search" placeholder="Search by title or topic..." style="width:240px;">
+          <select id="lib-filter" style="width:auto;">
+            <option value="all">All Shared</option>
+            <option value="mine">My Uploads</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="switchTab('upload')" id="lib-upload-btn">+ Upload</button>
+        </div>
+      </div>
+      <div class="video-grid" id="video-grid">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- Upload View -->
+    <div id="view-upload" class="card hidden" style="max-width:650px; margin:0 auto;">
+      <h2 class="card-title">Upload Video or Audio</h2>
+      <p class="card-subtitle">Upload video (.mp4, .mov, .avi, .webm, .mkv) or audio (.mp3, .wav, .m4a) up to 500 MB.</p>
+      
+      <div id="drop-zone" style="border:2px dashed var(--card-border); border-radius:8px; padding:2.5rem 1.5rem; text-align:center; background:var(--bg); cursor:pointer; margin-bottom:1.25rem;">
+        <div style="font-size:2.2rem; margin-bottom:0.5rem;">📁</div>
+        <p style="font-weight:600; margin-bottom:0.25rem;">Click to choose a file or drag & drop here</p>
+        <p style="font-size:0.8rem; color:var(--fg-muted);">MP4, WebM, MOV, AVI, MKV, MP3, WAV</p>
+        <input type="file" id="file-input" style="display:none;" accept=".mp4,.mov,.avi,.webm,.mkv,.mp3,.wav,.m4a">
+      </div>
+
+      <div id="upload-status" class="hidden" style="margin-bottom:1rem;">
+        <p id="upload-file-name" style="font-weight:600; font-size:0.9rem; margin-bottom:0.35rem;"></p>
+        <div style="width:100%; background:var(--card-border); height:8px; border-radius:4px; overflow:hidden;">
+          <div id="upload-bar" style="width:0%; background:var(--primary); height:100%; transition:width 0.2s;"></div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="start-upload-btn" style="width:100%;" disabled>Upload and Analyze</button>
+    </div>
+
+    <!-- Video Insights & Interactive Player View -->
+    <div id="view-detail" class="hidden">
+      <div class="flex-between mb-2">
+        <button class="btn btn-secondary btn-sm" onclick="switchTab('library')">← Back to Library</button>
+        <div style="display:flex; gap:0.5rem;">
+          <button class="btn btn-secondary btn-sm" id="detail-share-btn">Toggle Sharing</button>
+          <button class="btn btn-secondary btn-sm" id="detail-reprocess-btn">Reprocess AI</button>
+          <button class="btn btn-danger btn-sm" id="detail-delete-btn">Delete</button>
+        </div>
+      </div>
+
+      <div class="player-view">
+        <!-- Left: Video Player, Summary, Moments -->
+        <div>
+          <div class="video-container">
+            <video id="player" controls playsinline preload="metadata"></video>
+          </div>
+
+          <div class="player-controls">
+            <div style="display:flex; align-items:center; gap:0.4rem;">
+              <button class="btn btn-secondary btn-sm" onclick="skipVideo(-5)">-5s</button>
+              <button class="btn btn-secondary btn-sm" onclick="skipVideo(5)">+5s</button>
+              <select id="playback-speed" style="padding:0.25rem 0.5rem; font-size:0.8rem;">
+                <option value="0.75">0.75x</option>
+                <option value="1" selected>1.0x</option>
+                <option value="1.25">1.25x</option>
+                <option value="1.5">1.5x</option>
+                <option value="2">2.0x</option>
+              </select>
+            </div>
+            <button class="btn btn-primary btn-sm" id="btn-add-bookmark">🔖 Bookmark Moment</button>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title" id="detail-title">Video Overview</h3>
+            <p style="font-size:0.92rem; line-height:1.5; color:var(--fg); margin-bottom:1rem;" id="detail-short-summary">Processing...</p>
+            
+            <details style="margin-bottom:1rem;">
+              <summary style="cursor:pointer; font-weight:600; font-size:0.88rem; color:var(--primary);">View Comprehensive Detailed Summary</summary>
+              <p style="font-size:0.88rem; line-height:1.55; color:var(--fg-muted); margin-top:0.6rem;" id="detail-detailed-summary"></p>
+            </details>
+
+            <h4 style="font-size:0.92rem; font-weight:700; margin-bottom:0.4rem;">Top Keywords</h4>
+            <div class="kw-cloud" id="detail-keywords"></div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title">Key Moments & Highlights</h3>
+            <p class="card-subtitle">Automatically indexed high-density topic segments.</p>
+            <div id="detail-moments"></div>
+          </div>
+        </div>
+
+        <!-- Right: Interactive Transcript -->
+        <div>
+          <div class="card" style="height:100%;">
+            <div class="flex-between mb-2" style="flex-wrap:wrap; gap:0.5rem;">
+              <h3 class="card-title" style="margin-bottom:0;">Live Transcript</h3>
+              <div style="display:flex; gap:0.4rem;">
+                <button class="btn btn-secondary btn-sm" id="btn-edit-transcript">✏️ Edit</button>
+                <select id="export-select" style="font-size:0.8rem; padding:0.35rem 0.5rem;">
+                  <option value="">Export As...</option>
+                  <option value="transcript">Transcript (.txt)</option>
+                  <option value="summary">Summary (.txt)</option>
+                  <option value="vtt">Subtitles (.vtt)</option>
+                  <option value="srt">Subtitles (.srt)</option>
+                  <option value="json">Full Data (.json)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <input type="text" id="transcript-search" placeholder="Filter transcript in real time...">
+            </div>
+
+            <div class="transcript-box" id="transcript-container">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bookmarks View -->
+    <div id="view-bookmarks" class="card hidden">
+      <h2 class="card-title">My Bookmarked Moments</h2>
+      <p class="card-subtitle">Quickly jump back to saved timestamps and custom study notes.</p>
+      <div id="bookmarks-list"></div>
+    </div>
+
+    <!-- Analytics View -->
+    <div id="view-analytics" class="hidden">
+      <div class="card">
+        <h2 class="card-title">Analytics & Intelligence Dashboard</h2>
+        <p class="card-subtitle">Aggregate metrics across all processed video content.</p>
+        
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:1.5rem;" id="analytics-kpis">
+          <!-- KPI cards -->
+        </div>
+
+        <h3 style="font-size:1.05rem; font-weight:700; margin-bottom:0.6rem;">Top Topics & Vocabulary Frequency</h3>
+        <div class="kw-cloud" id="analytics-keywords" style="margin-bottom:1.5rem;"></div>
+
+        <h3 style="font-size:1.05rem; font-weight:700; margin-bottom:0.6rem;">Per-Video Statistics</h3>
+        <div style="overflow-x:auto;">
+          <table id="analytics-table">
+            <thead>
+              <tr>
+                <th>Video Title</th>
+                <th>Status</th>
+                <th>Duration</th>
+                <th>Views</th>
+                <th>Moments</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Console View -->
+    <div id="view-admin" class="hidden">
+      <div class="card">
+        <h2 class="card-title">Admin Console - User Management</h2>
+        <p class="card-subtitle">Manage roles and permissions for all registered accounts.</p>
+        <div style="overflow-x:auto; margin-bottom:2rem;">
+          <table id="admin-users-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Videos</th>
+                <th>Registered</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <h2 class="card-title">Job Queue & Processing Status</h2>
+        <p class="card-subtitle">Monitor background AI transcription and summarization tasks.</p>
+        <div style="overflow-x:auto; margin-bottom:2rem;">
+          <table id="admin-jobs-table">
+            <thead>
+              <tr>
+                <th>Job ID</th>
+                <th>Filename</th>
+                <th>Status</th>
+                <th>Error</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <h2 class="card-title">Platform Audit Trail</h2>
+        <p class="card-subtitle">Recent security, authentication, and video pipeline events.</p>
+        <div style="overflow-x:auto;">
+          <table id="admin-audit-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>User</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Transcript Editor Modal -->
+  <div id="transcript-modal" class="modal-backdrop hidden">
+    <div class="modal">
+      <h3 class="card-title">Edit Transcript</h3>
+      <p class="card-subtitle">Updating the transcript will automatically re-generate keywords and summaries.</p>
+      <textarea id="modal-transcript-text" rows="12" style="font-family:'JetBrains Mono',monospace; font-size:0.85rem; margin-bottom:1rem;"></textarea>
+      <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('transcript-modal')">Cancel</button>
+        <button class="btn btn-primary btn-sm" id="btn-save-transcript">Save & Recalculate</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bookmark Modal -->
+  <div id="bookmark-modal" class="modal-backdrop hidden">
+    <div class="modal" style="max-width:420px;">
+      <h3 class="card-title">Add Bookmark</h3>
+      <p class="card-subtitle" id="bm-modal-time">At timestamp: 00:00</p>
+      <div class="form-group">
+        <label>Note / Takeaway</label>
+        <input type="text" id="bm-modal-note" placeholder="E.g. Important definition of API..." autofocus>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('bookmark-modal')">Cancel</button>
+        <button class="btn btn-primary btn-sm" id="btn-confirm-bookmark">Save Bookmark</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <!-- Application Logic -->
+  <script>
+    const state = {
+      token: localStorage.getItem("clipmind_token") || "",
+      user: JSON.parse(localStorage.getItem("clipmind_user") || "null"),
+      currentVideo: null,
+      videos: [],
+      activeTab: "library",
+      isRegisterMode: false
+    };
+
+    // DOM helper
+    const $ = id => document.getElementById(id);
+
+    // Toast notifications
+    function notify(msg) {
+      const toast = $("toast");
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 3200);
+    }
+
+    // Modal helpers
+    function openModal(id) { $(id).classList.remove("hidden"); }
+    function closeModal(id) { $(id).classList.add("hidden"); }
+
+    // API caller
+    async function api(path, options = {}) {
+      options.headers = options.headers || {};
+      if (state.token) {
+        options.headers["Authorization"] = "Bearer " + state.token;
+      }
+      const res = await fetch(path, options);
+      if (res.status === 401) {
+        logout();
+        throw new Error("Session expired. Please sign in again.");
+      }
+      if (!res.ok) {
+        let errText = res.statusText;
+        try {
+          const json = await res.json();
+          errText = json.detail || errText;
+        } catch (_) {}
+        throw new Error(errText);
+      }
+      return res;
+    }
+
+    async function apiJson(path, options = {}) {
+      const res = await api(path, options);
+      return res.json();
+    }
+
+    // Formatting
+    function formatTime(sec) {
+      if (!sec && sec !== 0) return "00:00";
+      const s = Math.floor(sec);
+      const m = Math.floor(s / 60);
+      const remS = s % 60;
+      return `${String(m).padStart(2, "0")}:${String(remS).padStart(2, "0")}`;
+    }
+
+    // Theme Switcher
+    function initTheme() {
+      const savedTheme = localStorage.getItem("clipmind_theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", savedTheme);
+      $("theme-btn").textContent = savedTheme === "dark" ? "☀️" : "🌙";
+    }
+
+    $("theme-btn").onclick = () => {
+      const cur = document.documentElement.getAttribute("data-theme") || "light";
+      const next = cur === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("clipmind_theme", next);
+      $("theme-btn").textContent = next === "dark" ? "☀️" : "🌙";
+    };
+
+    // Navigation & Tabs
+    function switchTab(tab) {
+      state.activeTab = tab;
+      document.querySelectorAll(".tab-btn[data-tab]").forEach(b => {
+        b.classList.toggle("active", b.dataset.tab === tab);
+      });
+
+      const views = ["library", "upload", "detail", "bookmarks", "analytics", "admin"];
+      views.forEach(v => {
+        const el = $("view-" + v);
+        if (el) el.classList.toggle("hidden", v !== tab);
+      });
+
+      if (tab === "library") loadVideos();
+      if (tab === "bookmarks") loadBookmarks();
+      if (tab === "analytics") loadAnalytics();
+      if (tab === "admin") loadAdminData();
+    }
+
+    document.querySelectorAll(".tab-btn[data-tab]").forEach(btn => {
+      btn.onclick = () => switchTab(btn.dataset.tab);
+    });
+
+    // Auth Screen Handlers
+    $("tab-signin").onclick = () => {
+      state.isRegisterMode = false;
+      $("tab-signin").classList.add("active");
+      $("tab-register").classList.remove("active");
+      $("auth-title").textContent = "Welcome Back";
+      $("group-role").classList.add("hidden");
+      $("auth-submit").textContent = "Sign In";
+      $("auth-error").textContent = "";
+    };
+
+    $("tab-register").onclick = () => {
+      state.isRegisterMode = true;
+      $("tab-register").classList.add("active");
+      $("tab-signin").classList.remove("active");
+      $("auth-title").textContent = "Create Account";
+      $("group-role").classList.remove("hidden");
+      $("auth-submit").textContent = "Register";
+      $("auth-error").textContent = "";
+    };
+
+    $("auth-submit").onclick = async () => {
+      const email = $("auth-email").value.trim();
+      const password = $("auth-password").value;
+      const role = $("auth-role").value;
+      $("auth-error").textContent = "";
+
+      if (!email || !password) {
+        $("auth-error").textContent = "Please fill in all fields.";
+        return;
+      }
+
+      try {
+        if (state.isRegisterMode) {
+          await apiJson("/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password, role })
+          });
+          notify("Account created! Signing you in...");
+        }
+
+        const formData = new URLSearchParams();
+        formData.append("username", email);
+        formData.append("password", password);
+
+        const res = await fetch("/auth/login", { method: "POST", body: formData });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || "Authentication failed");
+        }
+        const data = await res.json();
+        state.token = data.access_token;
+        state.user = { email: data.email, role: data.role, name: data.name, id: data.id };
+        localStorage.setItem("clipmind_token", state.token);
+        localStorage.setItem("clipmind_user", JSON.stringify(state.user));
+
+        notify(`Signed in as ${data.email} (${data.role})`);
+        updateAuthUI();
+        switchTab("library");
+      } catch (err) {
+        $("auth-error").textContent = err.message;
+      }
+    };
+
+    function logout() {
+      state.token = "";
+      state.user = null;
+      localStorage.removeItem("clipmind_token");
+      localStorage.removeItem("clipmind_user");
+      updateAuthUI();
+    }
+    $("logout-btn").onclick = logout;
+
+    function updateAuthUI() {
+      const loggedIn = !!state.token;
+      $("view-auth").classList.toggle("hidden", loggedIn);
+      $("main-nav").classList.toggle("hidden", !loggedIn);
+      $("user-info").classList.toggle("hidden", !loggedIn);
+
+      if (loggedIn && state.user) {
+        $("user-email").textContent = state.user.email;
+        const badge = $("user-role-badge");
+        badge.textContent = state.user.role;
+        badge.className = `badge badge-${state.user.role}`;
+
+        const isLearner = state.user.role === "learner";
+        const isAdmin = state.user.role === "admin";
+        
+        $("nav-upload").classList.toggle("hidden", isLearner);
+        $("lib-upload-btn").classList.toggle("hidden", isLearner);
+        $("nav-analytics").classList.toggle("hidden", isLearner);
+        $("nav-admin").style.display = isAdmin ? "flex" : "none";
+      }
+    }
+
+    // Video Library
+    async function loadVideos() {
+      try {
+        const mine = $("lib-filter").value === "mine";
+        const search = $("lib-search").value.trim();
+        let url = `/videos?mine=${mine}`;
+        if (search) url += `&search=${encodeURIComponent(search)}`;
+
+        const videos = await apiJson(url);
+        state.videos = videos;
+        const grid = $("video-grid");
+        grid.innerHTML = "";
+
+        if (videos.length === 0) {
+          grid.innerHTML = `<p style="grid-column:1/-1; text-align:center; color:var(--fg-muted); padding:3rem 1rem;">No videos found. Upload a video to start receiving AI summaries!</p>`;
+          return;
+        }
+
+        videos.forEach(v => {
+          const card = document.createElement("div");
+          card.className = "video-card";
+          const statusClass = `badge badge-${v.status}`;
+          
+          card.innerHTML = `
+            <div class="video-card-header">
+              <span class="video-title">${escapeHtml(v.filename)}</span>
+              <span class="${statusClass}">${v.status}</span>
+            </div>
+            <p class="video-summary">${escapeHtml(v.summary_short || "Processing transcription and summary...")}</p>
+            <div class="video-meta">
+              <span>⏱ ${formatTime(v.duration)}</span>
+              <span>👁 ${v.views} views</span>
+              <span>${v.shared ? "🌐 Shared" : "🔒 Private"}</span>
+            </div>
+          `;
+          card.onclick = () => openVideoDetail(v.id);
+          grid.appendChild(card);
+        });
+
+        // Polling if any video is processing
+        if (videos.some(v => ["uploaded", "queued", "processing"].includes(v.status))) {
+          setTimeout(() => {
+            if (state.activeTab === "library") loadVideos();
+          }, 4500);
+        }
+      } catch (err) {
+        notify(err.message);
+      }
+    }
+
+    $("lib-filter").onchange = loadVideos;
+    $("lib-search").oninput = debounce(loadVideos, 300);
+
+    // Upload Handlers
+    const dropZone = $("drop-zone");
+    const fileInput = $("file-input");
+    let selectedFile = null;
+
+    dropZone.onclick = () => fileInput.click();
+    fileInput.onchange = e => handleFile(e.target.files[0]);
+
+    dropZone.ondragover = e => { e.preventDefault(); dropZone.style.borderColor = "var(--primary)"; };
+    dropZone.ondragleave = () => { dropZone.style.borderColor = "var(--card-border)"; };
+    dropZone.ondrop = e => {
+      e.preventDefault();
+      dropZone.style.borderColor = "var(--card-border)";
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    };
+
+    function handleFile(file) {
+      if (!file) return;
+      selectedFile = file;
+      $("upload-status").classList.remove("hidden");
+      $("upload-file-name").textContent = `${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB)`;
+      $("start-upload-btn").disabled = false;
+      $("upload-bar").style.width = "0%";
+    }
+
+    $("start-upload-btn").onclick = async () => {
+      if (!selectedFile) return;
+      $("start-upload-btn").disabled = true;
+      $("start-upload-btn").textContent = "Uploading...";
+
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      try {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/videos");
+        xhr.setRequestHeader("Authorization", "Bearer " + state.token);
+
+        xhr.upload.onprogress = e => {
+          if (e.lengthComputable) {
+            const pct = Math.round((e.loaded / e.total) * 100);
+            $("upload-bar").style.width = pct + "%";
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            notify("Video uploaded! AI pipeline started.");
+            selectedFile = null;
+            $("start-upload-btn").textContent = "Upload and Analyze";
+            $("upload-status").classList.add("hidden");
+            switchTab("library");
+          } else {
+            let msg = "Upload failed";
+            try { msg = JSON.parse(xhr.responseText).detail || msg; } catch (_) {}
+            notify(msg);
+            $("start-upload-btn").disabled = false;
+            $("start-upload-btn").textContent = "Upload and Analyze";
+          }
+        };
+
+        xhr.onerror = () => {
+          notify("Network error during upload");
+          $("start-upload-btn").disabled = false;
+          $("start-upload-btn").textContent = "Upload and Analyze";
+        };
+
+        xhr.send(formData);
+      } catch (err) {
+        notify(err.message);
+        $("start-upload-btn").disabled = false;
+        $("start-upload-btn").textContent = "Upload and Analyze";
+      }
+    };
+
+    // Video Detail & Player
+    async function openVideoDetail(id) {
+      try {
+        const v = await apiJson("/videos/" + id);
+        state.currentVideo = v;
+        switchTab("detail");
+
+        $("detail-title").textContent = v.filename;
+        $("detail-short-summary").textContent = v.summary_short || "Analysis in progress...";
+        $("detail-detailed-summary").textContent = v.summary_detailed || "Detailed summary will appear once processing completes.";
+        
+        // Setup Video Player with range-stream & auth query token
+        const player = $("player");
+        player.src = `/videos/${v.id}/stream?token=${encodeURIComponent(state.token)}`;
+        player.load();
+
+        // Keywords
+        const kwContainer = $("detail-keywords");
+        kwContainer.innerHTML = (v.keywords || []).map(k => `
+          <span class="kw-chip" onclick="searchTranscript('${k.word}')">${k.word} (${k.count})</span>
+        `).join("");
+
+        // Key Moments
+        const kmContainer = $("detail-moments");
+        kmContainer.innerHTML = "";
+        if (!v.moments || v.moments.length === 0) {
+          kmContainer.innerHTML = `<p style="font-size:0.86rem; color:var(--fg-muted);">No key moments generated yet.</p>`;
+        } else {
+          v.moments.forEach(m => {
+            const el = document.createElement("div");
+            el.className = "moment-card";
+            el.innerHTML = `
+              <span class="moment-time">${formatTime(m.start)}</span>
+              <span class="moment-text">${escapeHtml(m.text)}</span>
+              <span class="moment-score">★ ${m.score}</span>
+            `;
+            el.onclick = () => {
+              player.currentTime = m.start;
+              player.play();
+            };
+            kmContainer.appendChild(el);
+          });
+        }
+
+        // Transcript
+        renderTranscript(v.segments || []);
+
+        // Share button status
+        $("detail-share-btn").textContent = v.shared ? "Make Private" : "Share Video";
+      } catch (err) {
+        notify(err.message);
+      }
+    }
+
+    // Video Player sync with transcript
+    const player = $("player");
+    player.ontimeupdate = () => {
+      const cur = player.currentTime;
+      const segs = document.querySelectorAll(".transcript-segment");
+      segs.forEach(s => {
+        const start = parseFloat(s.dataset.start);
+        const end = parseFloat(s.dataset.end);
+        const active = cur >= start && cur <= end;
+        if (active && !s.classList.contains("active")) {
+          document.querySelectorAll(".transcript-segment.active").forEach(a => a.classList.remove("active"));
+          s.classList.add("active");
+          s.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      });
+    };
+
+    function skipVideo(delta) {
+      player.currentTime = Math.max(0, Math.min(player.duration || 0, player.currentTime + delta));
+    }
+
+    $("playback-speed").onchange = e => {
+      player.playbackRate = parseFloat(e.target.value);
+    };
+
+    // Render Transcript
+    function renderTranscript(segments) {
+      const box = $("transcript-container");
+      box.innerHTML = "";
+      if (!segments || segments.length === 0) {
+        box.innerHTML = `<p style="padding:1rem; color:var(--fg-muted); font-size:0.88rem;">${state.currentVideo && state.currentVideo.transcript ? escapeHtml(state.currentVideo.transcript) : "Transcript not available."}</p>`;
+        return;
+      }
+
+      segments.forEach(seg => {
+        const row = document.createElement("div");
+        row.className = "transcript-segment";
+        row.dataset.start = seg.start;
+        row.dataset.end = seg.end;
+        row.innerHTML = `
+          <span class="seg-time">${formatTime(seg.start)}</span>
+          <span class="seg-text">${escapeHtml(seg.text)}</span>
+        `;
+        row.onclick = () => {
+          player.currentTime = seg.start;
+          player.play();
+        };
+        box.appendChild(row);
+      });
+    }
+
+    // Search Transcript
+    function searchTranscript(kw) {
+      $("transcript-search").value = kw;
+      filterTranscript(kw);
+    }
+
+    $("transcript-search").oninput = e => filterTranscript(e.target.value);
+
+    function filterTranscript(query) {
+      const q = query.toLowerCase().trim();
+      const segs = (state.currentVideo && state.currentVideo.segments) || [];
+      if (!q) {
+        renderTranscript(segs);
+        return;
+      }
+      const filtered = segs.filter(s => s.text.toLowerCase().includes(q));
+      renderTranscript(filtered);
+    }
+
+    // Bookmarking
+    $("btn-add-bookmark").onclick = () => {
+      if (!state.currentVideo) return;
+      $("bm-modal-time").textContent = `At timestamp: ${formatTime(player.currentTime)}`;
+      $("bm-modal-note").value = "";
+      openModal("bookmark-modal");
+    };
+
+    $("btn-confirm-bookmark").onclick = async () => {
+      if (!state.currentVideo) return;
+      const at_sec = Math.floor(player.currentTime);
+      const note = $("bm-modal-note").value.trim();
+      try {
+        await apiJson("/bookmarks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ video_id: state.currentVideo.id, at_sec, note })
+        });
+        closeModal("bookmark-modal");
+        notify(`Bookmark saved at ${formatTime(at_sec)}!`);
+      } catch (err) {
+        notify(err.message);
+      }
+    };
+
+    async function loadBookmarks() {
+      try {
+        const bms = await apiJson("/bookmarks");
+        const list = $("bookmarks-list");
+        list.innerHTML = "";
+        if (bms.length === 0) {
+          list.innerHTML = `<p style="color:var(--fg-muted); padding:1rem 0;">You have no saved bookmarks yet.</p>`;
+          return;
+        }
+
+        bms.forEach(bm => {
+          const card = document.createElement("div");
+          card.className = "moment-card";
+          card.style.justifyContent = "space-between";
+          card.innerHTML = `
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+              <span class="moment-time">${formatTime(bm.at_sec)}</span>
+              <div>
+                <b style="font-size:0.92rem; color:var(--fg);">${escapeHtml(bm.video_title)}</b>
+                <p style="font-size:0.84rem; color:var(--fg-muted);">${escapeHtml(bm.note || "No note added.")}</p>
+              </div>
+            </div>
+            <div style="display:flex; gap:0.4rem;">
+              <button class="btn btn-secondary btn-sm" onclick="jumpToBookmark(${bm.video_id}, ${bm.at_sec})">Jump</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteBookmark(${bm.id})">Delete</button>
+            </div>
+          `;
+          list.appendChild(card);
+        });
+      } catch (err) {
+        notify(err.message);
+      }
+    }
+
+    async function jumpToBookmark(vid, atSec) {
+      await openVideoDetail(vid);
+      setTimeout(() => {
+        player.currentTime = atSec;
+        player.play();
+      }, 500);
+    }
+
+    async function deleteBookmark(id) {
+      if (!confirm("Delete this bookmark?")) return;
+      try {
+        await apiJson("/bookmarks/" + id, { method: "DELETE" });
+        notify("Bookmark deleted");
+        loadBookmarks();
+      } catch (err) {
+        notify(err.message);
+      }
+    }
+
+    // Video Actions
+    $("detail-share-btn").onclick = async () => {
+      if (!state.currentVideo) return;
+      try {
+        const res = await apiJson(`/videos/${state.currentVideo.id}/share`, { method: "POST" });
+        state.currentVideo.shared = res.shared;
+        $("detail-share-btn").textContent = res.shared ? "Make Private" : "Share Video";
+        notify(res.shared ? "Video is now public/shared" : "Video is now private");
+      } catch (err) {
+        notify(err.message);
+      }
+    };
+
+    $("detail-reprocess-btn").onclick = async () => {
+      if (!state.currentVideo || !confirm("Reprocess video through Whisper and BART?")) return;
+      try {
+        await apiJson(`/videos/${state.currentVideo.id}/reprocess`, { method: "POST" });
+        notify("Video analysis re-queued!");
+        switchTab("library");
+      } catch (err) {
+        notify(err.message);
+      }
+    };
+
+    $("detail-delete-btn").onclick = async () => {
+      if (!state.currentVideo || !confirm("Are you sure you want to permanently delete this video?")) return;
+      try {
+        await apiJson(`/videos/${state.currentVideo.id}`, { method: "DELETE" });
+        notify("Video deleted");
+        switchTab("library");
+      } catch (err) {
+        notify(err.message);
+      }
+    };
+
+    // Edit Transcript Modal
+    $("btn-edit-transcript").onclick = () => {
+      if (!state.currentVideo) return;
+      $("modal-transcript-text").value = state.currentVideo.transcript || "";
+      openModal("transcript-modal");
+    };
+
+    $("btn-save-transcript").onclick = async () => {
+      if (!state.currentVideo) return;
+      const newText = $("modal-transcript-text").value;
+      try {
+        await apiJson(`/videos/${state.currentVideo.id}/transcript`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ transcript: newText })
+        });
+        closeModal("transcript-modal");
+        notify("Transcript saved and summaries updated!");
+        openVideoDetail(state.currentVideo.id);
+      } catch (err) {
+        notify(err.message);
+      }
+    };
+
+    // Export Handler
+    $("export-select").onchange = e => {
+      const kind = e.target.value;
+      if (!kind || !state.currentVideo) return;
+      window.open(`/videos/${state.currentVideo.id}/download?kind=${kind}&token=${encodeURIComponent(state.token)}`, "_blank");
+      e.target.value = "";
+    };
+
+    // Analytics
+    async function loadAnalytics() {
+      try {
+        const a = await apiJson("/analytics");
+        $("analytics-kpis").innerHTML = `
+          <div class="card" style="padding:1rem; text-align:center;">
+            <div style="font-size:1.8rem; font-weight:700; color:var(--primary);">${a.videos}</div>
+            <div style="font-size:0.8rem; color:var(--fg-muted);">Total Videos</div>
+          </div>
+          <div class="card" style="padding:1rem; text-align:center;">
+            <div style="font-size:1.8rem; font-weight:700; color:var(--success);">${a.ready}</div>
+            <div style="font-size:0.8rem; color:var(--fg-muted);">Ready / Processed</div>
+          </div>
+          <div class="card" style="padding:1rem; text-align:center;">
+            <div style="font-size:1.8rem; font-weight:700; color:var(--accent);">${a.total_views}</div>
+            <div style="font-size:0.8rem; color:var(--fg-muted);">Total Views</div>
+          </div>
+          <div class="card" style="padding:1rem; text-align:center;">
+            <div style="font-size:1.8rem; font-weight:700; color:var(--warning);">${a.total_minutes}m</div>
+            <div style="font-size:0.8rem; color:var(--fg-muted);">Total Duration</div>
+          </div>
+        `;
+
+        $("analytics-keywords").innerHTML = (a.top_keywords || []).map(k => `
+          <span class="kw-chip">${escapeHtml(k[0])} (${k[1]})</span>
+        `).join("");
+
+        const tbody = $("analytics-table").querySelector("tbody");
+        tbody.innerHTML = (a.per_video || []).map(v => `
+          <tr>
+            <td><b>${escapeHtml(v.name)}</b></td>
+            <td><span class="badge badge-${v.status}">${v.status}</span></td>
+            <td>${formatTime(v.duration)}</td>
+            <td>${v.views}</td>
+            <td>${v.moments_count}</td>
+          </tr>
+        `).join("");
+      } catch (err) {
+        notify(err.message);
+      }
+    }
+
+    // Admin Console
+    async function loadAdminData() {
+      try {
+        const [users, jobs, audit] = await Promise.all([
+          apiJson("/admin/users"),
+          apiJson("/admin/jobs"),
+          apiJson("/admin/audit")
+        ]);
+
+        // Users
+        const uBody = $("admin-users-table").querySelector("tbody");
+        uBody.innerHTML = users.map(u => `
+          <tr>
+            <td>${u.id}</td>
+            <td>${escapeHtml(u.email)}</td>
+            <td>
+              <select onchange="updateUserRole(${u.id}, this.value)" style="padding:0.2rem 0.5rem; font-size:0.8rem;">
+                <option value="learner" ${u.role==='learner'?'selected':''}>Learner</option>
+                <option value="creator" ${u.role==='creator'?'selected':''}>Creator</option>
+                <option value="educator" ${u.role==='educator'?'selected':''}>Educator</option>
+                <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
+              </select>
+            </td>
+            <td>${u.video_count}</td>
+            <td>${u.created ? u.created.split("T")[0] : ""}</td>
+            <td>
+              ${u.id !== state.user.id ? `<button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})">Delete</button>` : `<span class="badge badge-admin">You</span>`}
+            </td>
+          </tr>
+        `).join("");
+
+        // Jobs
+        const jBody = $("admin-jobs-table").querySelector("tbody");
+        jBody.innerHTML = jobs.length === 0 
+          ? `<tr><td colspan="5" style="text-align:center; color:var(--fg-muted);">No non-ready jobs in queue.</td></tr>`
+          : jobs.map(j => `
+            <tr>
+              <td>#${j.id}</td>
+              <td>${escapeHtml(j.filename)}</td>
+              <td><span class="badge badge-${j.status}">${j.status}</span></td>
+              <td style="max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--danger);">${escapeHtml(j.error || "None")}</td>
+              <td><button class="btn btn-secondary btn-sm" onclick="retryJob(${j.id})">Retry</button></td>
+            </tr>
+          `).join("");
+
+        // Audit
+        const aBody = $("admin-audit-table").querySelector("tbody");
+        aBody.innerHTML = audit.map(a => `
+          <tr>
+            <td style="font-size:0.8rem; color:var(--fg-muted);">${a.at ? a.at.replace("T"," ").split(".")[0] : ""}</td>
+            <td>${escapeHtml(a.user_email || "System")}</td>
+            <td><code>${escapeHtml(a.action)}</code></td>
+          </tr>
+        `).join("");
+      } catch (err) {
+        notify(err.message);
+      }
+    }
+
+    async function updateUserRole(uid, role) {
+      try {
+        await apiJson(`/admin/users/${uid}?role=${role}`, { method: "PATCH" });
+        notify(`User #${uid} role updated to ${role}`);
+      } catch (err) {
+        notify(err.message);
+        loadAdminData();
+      }
+    }
+
+    async function deleteUser(uid) {
+      if (!confirm(`Delete user #${uid}? All their videos will also be deleted.`)) return;
+      try {
+        await apiJson(`/admin/users/${uid}`, { method: "DELETE" });
+        notify("User deleted");
+        loadAdminData();
+      } catch (err) {
+        notify(err.message);
+      }
+    }
+
+    async function retryJob(vid) {
+      try {
+        await apiJson(`/admin/jobs/${vid}/retry`, { method: "POST" });
+        notify(`Job #${vid} re-queued`);
+        loadAdminData();
+      } catch (err) {
+        notify(err.message);
+      }
+    }
+
+    // Helpers
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function debounce(func, wait) {
+      let timeout;
+      return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+
+    // Initialization
+    initTheme();
+    updateAuthUI();
+    if (state.token) {
+      switchTab("library");
+    }
+  </script>
+</body>
+</html>

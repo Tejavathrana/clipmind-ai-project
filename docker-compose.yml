@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: clip
+      POSTGRES_PASSWORD: clip_secure_password
+      POSTGRES_DB: clipmind
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clip -d clipmind"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://clip:clip_secure_password@db:5432/clipmind
+      SECRET_KEY: clipmind-super-secret-key-change-in-production
+      WHISPER_MODEL: base
+      MAX_UPLOAD_MB: 500
+      UPLOAD_DIR: /srv/uploads
+    volumes:
+      - uploads:/srv/uploads
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  uploads:
